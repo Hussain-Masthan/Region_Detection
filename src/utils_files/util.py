@@ -15,6 +15,7 @@ def setup_root_logger(prefix: str):
 
     # Generate logging file
     log_root = os.getcwd() + '/logger/'
+    os.makedirs(log_root, exist_ok=True)
     # if os.getenv("PYTHON_LOG_ROOT") is None:
     #     raise RuntimeError("Environment variable PYTHON_LOG_ROOT is not set! Exiting..")
     # curr_time = time.localtime()

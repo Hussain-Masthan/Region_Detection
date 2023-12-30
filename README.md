@@ -22,7 +22,7 @@ Develop a robust API endpoint, leveraging YOLOv8 on the CPU, for precise identif
 Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/your-repository.git
+git clone https://github.com/Hussain-Masthan/Region_Detection.git
 ```
 
 Install the required dependencies:
