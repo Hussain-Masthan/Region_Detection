@@ -54,20 +54,22 @@ class RegionExtractor:
             _logger.info("Region Identification process is started...")
             regions_list = self.__identify_regions()
             _logger.info("Region Identification process is completed...")
+            if regions_list:
+                # Coordinates overlapping process
+                _logger.info("Coordinates Overlapping process is started...")
+                merged_coordinates = self.__merge_overlapping_coordinates(regions_list)
+                _logger.info("Coordinates Overlapping process is completed...")
 
-            # Coordinates overlapping process
-            _logger.info("Coordinates Overlapping process is started...")
-            merged_coordinates = self.__merge_overlapping_coordinates(regions_list)
-            _logger.info("Coordinates Overlapping process is completed...")
-
-            # Logging and saving progress images
-            if self.save_images == 'True':
-                _logger.info("Output Progress Image is started...")
-                self.__write_merged_overlap_image(merged_coordinates)
-                self.__write_white_mask_image(regions_list)
-                self.__write_mask_image_with_original(regions_list)
-                _logger.info("Output Progress Image is completed...")
-
+                # Logging and saving progress images
+                if self.save_images == 'True':
+                    _logger.info("Output Progress Image is started...")
+                    self.__write_bounding_box_original(regions_list)
+                    self.__write_merged_overlap_image(merged_coordinates)
+                    self.__write_white_mask_image(regions_list)
+                    self.__write_mask_image_with_original(regions_list)
+                    _logger.info("Output Progress Image is completed...")
+            else:
+                _logger.info("No Regions Found in this image...")
             # Logging region fields
             _logger.info(f"Region Fields: {regions_list}")
             _logger.info("----------------------------------")
@@ -123,6 +125,20 @@ class RegionExtractor:
             _logger.error(f"Region Identification Process failed! {repr(e)}")
 
         return regions_list
+
+    def __write_bounding_box_original(self, regions_list):
+        """Writes an image with a detected region bounding boxes"""
+        try:
+            original_image = cv2.imread(self.image_path)
+            for reg_idx, region_data in enumerate(regions_list):
+                xMin, yMin, xMax, yMax = region_data['xmin'], region_data['ymin'], region_data['xmax'], region_data['ymax']
+                label, accuracy = region_data['class_name'], region_data['confidence']
+                text = f'{label} ({accuracy:.2f})'
+                cv2.rectangle(original_image, (xMin, yMin), (xMax, yMax), (0, 255, 0), 2)
+                cv2.putText(original_image, text, (xMin, yMin - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            cv2.imwrite(f"{self.data_path}/original_annotated.jpg", original_image)
+        except Exception as e:
+            _logger.error(f"Region Detection Process with Original Image Process failed! {repr(e)}")
 
     def __write_white_mask_image(self, regions_list):
         """Writes an image with a white mask based on identified regions."""
