@@ -87,6 +87,56 @@ The Object Detection API provides two main endpoints:
 * All processed images are saved in the `/data/` directory.
 
 
+## Output Responses
+
+The API response includes the following parameters:
+
+- **Status Code**: An HTTP status code indicating the success or failure of the request.
+- **Status**: Success or error.
+- **Message**: A descriptive message providing additional context about the status of the request.
+- **region_data**: Details about the regions detected in the given image. only this four labels(chair, couch, bed, dining table)
+- **merged_coordinates**: Coordinates of regions that have been merged to eliminate overlaps.
+
+#### Example Response
+
+```json
+{
+  "status": "success",
+  "status_code": 200,
+  "status_message": "Region Data found Successfully.",
+  "region_data": [
+    {
+      "xmin": 801,
+      "ymin": 538,
+      "xmax": 1999,
+      "ymax": 1353,
+      "confidence": 0.92,
+      "class_id": 57,
+      "class_name": "dining table"
+    },
+	    {
+      "xmin": 0,
+      "ymin": 625,
+      "xmax": 263,
+      "ymax": 1170,
+      "confidence": 0.7,
+      "class_id": 56,
+      "class_name": "chair"
+    },
+    // ... additional region entries ...
+  ],
+  "merged_overlapping_coordinates": [
+    {
+      "xmin": 0,
+      "ymin": 538,
+      "xmax": 2000,
+      "ymax": 1998
+    }
+  ]
+}
+```
+
+
 ## Configuration
 * Configuration settings are stored in the config.ini file.
 
