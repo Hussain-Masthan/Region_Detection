@@ -7,8 +7,6 @@
 # Import Necessary Modules
 import os
 
-from src.utils_files.config_reader import ConfigReader
-
 import uvicorn
 
 from fastapi import FastAPI, File, UploadFile, status
@@ -17,6 +15,9 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from service.region_detection_service.object_detection_processor import RegionExtractor
+
+from src.utils_files.config_reader import ConfigReader
+from src.utils_files.file_utils import save_image_from_server, save_uploaded_file
 
 # Load configuration from config.ini
 config_mgr = ConfigReader().config_reader()
@@ -38,14 +39,8 @@ UPLOAD_DIR = config_mgr.get("OUTPUT", "IMAGES_PATH")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
-def save_uploaded_file(file, destination):
-    """ Save the Uploaded Image to the specified location """
-    with open(destination, "wb") as dest_file:
-        dest_file.write(file.file.read())
-        
-        
-@app.post("/detect_regions_from_uploaded_image/")
-async def detect_regions_from_uploaded_images(image_file: UploadFile = File(...)):
+@app.post("/detect_regions_multi_upload/")
+async def detect_regions_from_multi_uploaded_images(image_file: UploadFile = File(...)):
     """
     Endpoint Description:
     - Endpoint for multi-object region detection from a User-uploaded image file.
@@ -71,23 +66,31 @@ async def detect_regions_from_uploaded_images(image_file: UploadFile = File(...)
 
         # Perform Region detection on the uploaded image
         region_fields, merged_coordinates = RegionExtractor(image_path).extract_regions()
-        # Return the result as JSON response
-        return JSONResponse(content={"status": "success", "status_code": status.HTTP_200_OK,
-                                     "region_data": region_fields, "merged_coordinates": merged_coordinates},
-                            status_code=status.HTTP_200_OK)
+        if region_fields:
+            # Return the result as JSON response
+            return JSONResponse(content={"status": "success", "status_code": status.HTTP_200_OK,
+                                         "region_data": region_fields, "message": "Region Data found Successfully",
+                                         "merged_coordinates": merged_coordinates},
+                                status_code=status.HTTP_200_OK)
+        else:
+            # Return the result as JSON response
+            return JSONResponse(content={"status": "success", "status_code": status.HTTP_200_OK,
+                                         "region_data": region_fields, "message": "No Region data Found",
+                                         "merged_coordinates": merged_coordinates},
+                                status_code=status.HTTP_200_OK)
 
     except HTTPException as e:
         # Handle client errors and return an error response
-        return JSONResponse(content={"status": "error", "status_code": e.status_code,
+        return JSONResponse(content={"status": "error", "status_code": e.status_code, "region_data": {},
                                      "message": str(e.detail)}, status_code=e.status_code)
 
     except Exception as e:
         # Handle server errors and return an error response
         return JSONResponse(content={"status": "error", "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                     "message": f"Internal server error: {str(e)}"},
+                                     "region_data": {}, "message": f"Internal server error: {str(e)}"},
                             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
+    
+    
 @app.post("/detect_regions_from_image_link/")
 async def detect_regions_from_image_link(doc_file_name: str):
     """
@@ -104,12 +107,22 @@ async def detect_regions_from_image_link(doc_file_name: str):
         # Validate the input parameter
         if not doc_file_name:
             raise HTTPException(status_code=400, detail="Invalid document file name.")
+        # Save the Uploaded server Image file from Users in Local
+        image_path = save_image_from_server(doc_file_name, UPLOAD_DIR)
         # Perform Region Detection
-        region_fields, merged_coordinates = RegionExtractor(doc_file_name).extract_regions()
-        # Return the result as JSON response
-        return JSONResponse(content={"status": "success", "status_code": status.HTTP_200_OK,
-                                     "region_data": region_fields, "merged_coordinates": merged_coordinates},
-                            status_code=status.HTTP_200_OK)
+        region_fields, merged_coordinates = RegionExtractor(image_path).extract_regions()
+        if region_fields:
+            # Return the result as JSON response
+            return JSONResponse(content={"status": "success", "status_code": status.HTTP_200_OK,
+                                         "region_data": region_fields, "message": "Region Data found Successfully",
+                                         "merged_coordinates": merged_coordinates},
+                                status_code=status.HTTP_200_OK)
+        else:
+            # Return the result as JSON response
+            return JSONResponse(content={"status": "success", "status_code": status.HTTP_200_OK,
+                                         "region_data": region_fields, "message": "No Region data Found",
+                                         "merged_coordinates": merged_coordinates},
+                                status_code=status.HTTP_200_OK)
 
     except Exception as e:
         # Handle Unexpected errors and return an error response
