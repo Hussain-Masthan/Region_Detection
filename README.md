@@ -37,6 +37,12 @@ Run the application:
 python app.py
 ```
 
+Please run the Swagger page once the server is started: 
+```bash
+http://localhost:8080/docs/
+```
+
+
 ## Usage
 
 The Object Detection API provides two main endpoints:
