@@ -39,8 +39,8 @@ UPLOAD_DIR = config_mgr.get("OUTPUT", "IMAGES_PATH")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
-@app.post("/detect_regions_multi_upload/")
-async def detect_regions_from_multi_uploaded_images(image_file: UploadFile = File(...)):
+@app.post("/detect_regions_from_uploaded_image/")
+async def detect_regions_from_uploaded_image(image_file: UploadFile = File(...)):
     """
     Endpoint Description:
     - Endpoint for multi-object region detection from a User-uploaded image file.
